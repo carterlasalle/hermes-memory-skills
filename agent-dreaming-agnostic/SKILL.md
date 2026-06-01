@@ -32,7 +32,7 @@ determines which tools you use in Phase 2.
 1. **Read the active memory provider** from `$HERMES_HOME/config.yaml`:
 
    ```bash
-   grep -A1 "^memory:" $HERMES_HOME/config.yaml | grep "provider:" | awk '{print $2}'
+   grep -A10 "^memory:" $HERMES_HOME/config.yaml | grep "provider:" | awk '{print $2}'
    ```
 
    Or read the config and check `memory.provider`.
