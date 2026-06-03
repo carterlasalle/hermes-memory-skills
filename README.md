@@ -73,6 +73,35 @@ hermes cron create \
 ```
 
 > **No separate lean-check cron needed.** Phase 2.5 Condensation runs as part of dreaming whenever capacity thresholds are breached (built-in >60%) or every cycle (holographic).
+>
+> ### ⚠️ Cron Limitation: Memory Providers Unavailable
+>
+> **Detection works, but promotion to holographic is blocked in cron.**
+>
+> Hermes Agent's cron scheduler hardcodes `skip_memory=True` for **all** cron jobs
+> (`cron/scheduler.py:1686`). This disables the entire memory subsystem —
+> `memory()`, `fact_store`, and `fact_feedback` are all unavailable.
+>
+> | Context | Holographic tools | Built-in `memory()` | File patching |
+> |---------|-------------------|---------------------|---------------|
+> | **Interactive session** | ✅ `fact_store` / `fact_feedback` | ✅ | ✅ |
+> | **Manual run** (`hermes cron run`) | ✅ | ✅ | ✅ |
+> | **Scheduled cron** | ❌ blocked by `skip_memory=True` | ❌ blocked | ✅ fallback |
+>
+> **What this means in practice:**
+> - Phase 0 detection correctly identifies holographic ✓
+> - Phase 2 promotions degrade to direct `patch` on MEMORY.md (works, just not holographic)
+> - Holographic facts from interactive sessions are **never condensed by cron runs**
+> - Built-in MEMORY.md stays healthy via file patching
+>
+> **Workarounds:**
+> - **Increase cron frequency** — daily catches MEMORY.md bloat before it hits 80%+
+> - **Run manually** — `hermes cron run <job-id>` uses the interactive toolset (holographic available)
+> - **Switch to built-in** — `hermes memory off` eliminates the split-brain entirely
+> - **Hybrid** — keep holographic for interactive sessions, accept MEMORY.md patching for cron
+>
+> This is a Hermes core limitation (tracked in [NousResearch/hermes-agent#34094](https://github.com/NousResearch/hermes-agent/issues/34094),
+> [#18885](https://github.com/NousResearch/hermes-agent/issues/18885)), not a skill bug.
 
 ## Requirements
 

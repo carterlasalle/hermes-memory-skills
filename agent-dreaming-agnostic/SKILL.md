@@ -477,3 +477,10 @@ After a dreaming run:
   pattern name and preceding lines in `old_string` to guarantee a unique match.
   A single-sentence `old_string` like `→ No structural action needed.` will hit
   multiple matches and fail — anchor with the pattern's numbered header.
+- **Cron jobs cannot access memory providers.** Hermes core hardcodes
+  `skip_memory=True` for all cron jobs (`cron/scheduler.py:1686`). Phase 0
+  detection correctly identifies the backend, but `fact_store`, `fact_feedback`,
+  and even `memory()` are unavailable in scheduled cron. Phase 2 falls back to
+  direct `patch` on MEMORY.md — this works for built-in but means holographic
+  facts are never condensed by cron runs. Running the job manually
+  (`hermes cron run <id>`) restores full holographic access.
