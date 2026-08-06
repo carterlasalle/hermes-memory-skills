@@ -1,16 +1,25 @@
 ---
 name: agent-dreaming-agnostic
-description: "Memory-agnostic background consolidation — reviews sessions, scores candidates, promotes durable insights to the active memory backend (built-in MEMORY.md or Holographic). Three-phase (Light/Deep/Condensation/REM). Run via cron or manually."
-tags: [memory, consolidation, dreaming, introspection, maintenance, holographic]
+description: "Memory-agnostic background consolidation — reviews sessions, scores candidates, promotes durable insights to the active memory backend (built-in MEMORY.md, Holographic, or DuckBrain). Three-phase (Light/Deep/Condensation/REM). Run via cron or manually."
+tags: [memory, consolidation, dreaming, introspection, maintenance, holographic, duckbrain]
 triggers: ["dream", "consolidate memory", "run dreaming", "memory consolidation"]
 ---
 
 # Agent Dreaming (Memory-Agnostic)
 
 Three-phase background memory consolidation that auto-detects the active memory
-backend (built-in MEMORY.md or Holographic) and routes Phase 2 promotions to the
-correct tools. Condensation (formerly `memory-lean-check`) is built into the
-dreaming lifecycle as Phase 2.5.
+backend (built-in MEMORY.md, Holographic, or DuckBrain) and routes Phase 2
+promotions to the correct tools. Condensation (formerly `memory-lean-check`) is
+built into the dreaming lifecycle as Phase 2.5.
+
+**DuckBrain** is a git-backed, DuckDB/VSS persistent memory server at
+`http://127.0.0.1:3000` exposed to agents as `mcp__duckbrain__*` MCP tools
+(`remember` / `recall` / `forget` / `list_keys` / `squash` /
+`get_compaction_stats` / namespace tools). When `memory.provider: duckbrain`
+AND the server is live, this skill routes ALL Phase 2 promotions and Phase 2.5
+condensation to DuckBrain. For a DuckBrain-only variant (no auto-detect),
+use `agent-dreaming-duckbrain` instead — this agnostic skill is the
+auto-detecting router that keeps built-in and holographic behavior intact.
 
 **When to run:** Scheduled cron (recommended: every 6–8 hours) or manually after
 a burst of activity.
@@ -37,19 +46,30 @@ determines which tools you use in Phase 2.
 
    Or read the config and check `memory.provider`.
 
-2. **Set backend mode:**
+2. **If provider == `duckbrain`, verify liveness (two-step check — SPEC-DB-001 §4.1):**
 
-   | Config value | Backend | Tools to use in Phase 2 | Threshold check |
-   |---|---|---|---|
-   | `""` (empty) or `null` or absent | **built-in** | `memory(action='add'|'replace'|'remove')` | Char limit (60%/80% of 2,200) |
-   | `holographic` | **holographic** | `fact_store(action='add'|'update'|'remove')` + `fact_feedback(action='helpful'|'unhelpful')` | Trust score (min 0.3 default) |
-   | `honcho` | **honcho** | Not yet supported — fall back to built-in `memory()` | Built-in limits apply |
-   | `mem0` | **mem0** | Not yet supported — fall back to built-in `memory()` | Built-in limits apply |
-   | Other | **unknown** | Fall back to built-in `memory()` | Built-in limits apply |
+   ```bash
+   curl -s -m 5 http://127.0.0.1:3000/health
+   ```
 
-3. **Log the backend** in the dream artifact: `## Backend: <mode>`
+   Expected: `{"status":"healthy",...}`. Connection refused / timeout → the
+   DuckBrain server is down; treat as built-in fallback (E1).
 
-4. **For holographic users:** Also note the config:
+3. **Set backend mode:**
+
+   | Config value | DuckBrain :3000 healthy? | Backend | Phase 2 tools | Threshold check |
+   |---|---|---|---|---|
+   | `"duckbrain"` | yes | **duckbrain** | `remember` / `recall` / `forget` / `list_keys` / `squash` | Compaction stats (tombstone %, get_compaction_stats) |
+   | `"duckbrain"` | no | built-in (fallback) | `memory(action='add'|'replace'|'remove')` | Char limit (60%/80% of 2,200) |
+   | `""` (empty) or `null` or absent | — | **built-in** | `memory(action='add'|'replace'|'remove')` | Char limit (60%/80% of 2,200) |
+   | `holographic` | — | **holographic** | `fact_store(action='add'|'update'|'remove')` + `fact_feedback(action='helpful'|'unhelpful')` | Trust score (min 0.3 default) |
+   | `honcho` | — | **honcho** | Not yet supported — fall back to built-in `memory()` | Built-in limits apply |
+   | `mem0` | — | **mem0** | Not yet supported — fall back to built-in `memory()` | Built-in limits apply |
+   | Other | — | **unknown** | Fall back to built-in `memory()` | Built-in limits apply |
+
+4. **Log the backend** in the dream artifact: `## Backend: <mode>`
+
+5. **For holographic users:** Also note the config:
    ```bash
    grep -A6 "hermes-memory-store:" $HERMES_HOME/config.yaml
    ```
@@ -63,13 +83,18 @@ determines which tools you use in Phase 2.
    This is the single most common blocker across dreaming cycles — flag it in the
    REM message so the user can wire the plugin.
 
-5. **Verify tool availability before Phase 2.** After determining the backend,
+6. **Verify tool availability before Phase 2.** After determining the backend,
    confirm the required tools are actually available in your toolset by scanning
    your tool list. If `fact_store` is absent despite holographic being configured,
    fall back to built-in `memory()` and note it in the dream artifact's backend
    section: `Holographic configured but tools unavailable — fallback to built-in`.
    The Phase 2 routing table still applies, but the actual tool calls degrade to
    built-in when holographic tools are missing.
+
+   **For duckbrain:** If provider is `duckbrain` but the `mcp__duckbrain__*`
+   tools are NOT in the toolset (e.g. cron sessions where MCP tools may be
+   absent — E2/E8), fall back to built-in `memory()` and log:
+   `DuckBrain configured but tools unavailable — fallback to built-in`.
 
 ---
 
@@ -99,6 +124,18 @@ determines which tools you use in Phase 2.
    Count entries and note trust score distribution. Holographic has no char
    limit, so "baseline" means entry count and average trust.
 
+   **DuckBrain:** DuckBrain has no char limit — the baseline is the key
+   inventory + compaction health (SPEC-DB-001 §2.2/§4.3):
+   - `mcp__duckbrain__list_keys(prefix="/", maxDepth=3, limit=200,
+     namespace="<ns>")` — broad view of the key hierarchy.
+   - `mcp__duckbrain__recall(keyPrefix="/", limit=200, namespace="<ns>")` —
+     broad view of stored memories.
+   - `mcp__duckbrain__get_compaction_stats()` — record tombstone % / partition
+     health. This is the capacity signal.
+   - **Namespace:** default `hermes-memory`; if this dream concerns a specific
+     project, use that project's namespace. ALWAYS pass `namespace` explicitly
+     (SPEC-DB-001 §3.1 — never rely on the current-namespace default).
+
 4. **Filter sessions.** Skip cron sessions (`session.source == "cron"`) — they're
    fully automated with no user interaction, unless they logged errors.
 
@@ -124,9 +161,10 @@ determines which tools you use in Phase 2.
    # Dream Artifact — YYYY-MM-DD HH:MM
 
    ## Backend
-   - Provider: [built-in | holographic]
+   - Provider: [built-in | holographic | duckbrain]
    - [For built-in: entry count, char usage / 2,200 (% full)]
    - [For holographic: entry count, avg trust score, min_trust_threshold]
+   - [For duckbrain: namespace, key inventory (list_keys prefix="/"), tombstone % / compaction health (get_compaction_stats)]
 
    ## Sessions Reviewed
    - [session_id] title (timestamp)
@@ -169,8 +207,12 @@ determines which tools you use in Phase 2.
    - **Novelty:** Is this genuinely new, or does it overlap with an existing
      entry? (Check current memory for similar entries — for holographic, use
      `fact_store(action='search', query='<keywords>')` or
-     `fact_store(action='probe', entity='<entity>')`) → FAIL if a similar entry
-     already exists.
+     `fact_store(action='probe', entity='<entity>')`; for duckbrain, use
+     `mcp__duckbrain__recall(query="<candidate keywords>", limit=10,
+     namespace="<ns>")` — semantic similarity check) → FAIL if a similar entry
+     already exists. **Note (duckbrain):** empty recall for a legitimately new
+     fact IS the novelty signal — proceed with promotion. Empty recall is only
+     a failure AFTER the write (E7).
    - **Durability:** Will this still be true in 30 days? User preferences and
      environment facts score high. Task progress, TODOs, and session outcomes
      score low. → FAIL if the fact is temporary or likely to change.
@@ -219,6 +261,47 @@ determines which tools you use in Phase 2.
    - Tool facts → entity: tool name (e.g., "docker", "pytest")
    - General/environment → entity: "environment"
 
+   #### DuckBrain Backend
+
+   Use the `mcp__duckbrain__*` MCP tools — NEVER `memory()` or `fact_store()`
+   for the duckbrain backend (SPEC-DB-001 §2):
+
+   - **New entries:** `mcp__duckbrain__remember(key="<hierarchical key>",
+     domain="<enum>", attributes={"source_session": "<id>", "dream_phase":
+     "deep", "backend": "duckbrain"}, embedding_text="<full candidate text>",
+     namespace="<ns>")`.
+     - `embedding_text` is REQUIRED and non-empty — it is the VSS retrieval
+       axis (E3; the DuckBrain equivalent of "entities are mandatory").
+     - `domain` enum: `person|event|concept|message|config|raw_note`. Mapping:
+       user preference → `person`; environment/service fact → `config`;
+       project/workspace fact → `concept`; one-time occurrence → `event`;
+       session exchange → `message`; unstructured snippet → `raw_note`.
+     - `attributes` may be `{}` but MUST be passed.
+   - **Replacements:** write the new version at the SAME key K (new id), then
+     tombstone the old id — order matters (SPEC-DB-001 §4.2):
+     `mcp__duckbrain__remember(key="<same key K>", ...)` THEN
+     `mcp__duckbrain__forget(id="<old id>", reason="superseded by <key K>",
+     namespace="<ns>")`. The old id comes from a prior recall/list_keys result —
+     never fabricated (E5).
+   - **Removals:** `mcp__duckbrain__forget(id="<id>", reason="<why>",
+     namespace="<ns>")` — tombstone only; id from a prior recall/list_keys.
+
+   **Key strategy (SPEC-DB-001 §3.2):** keys ARE a retrieval axis alongside VSS
+   query. Use hierarchical, slash-delimited, kebab-case keys:
+   - `/user/preference/<topic>` — user preferences, habits
+   - `/environment/<service>/<fact>` — ports, paths, service facts
+   - `/project/<name>/<decision-N>` — project decisions, numbered
+   - `/project/<name>/<component>/...` — project component facts
+   - `/tool/<name>/<fact>` — tool quirks, workarounds
+   - `/session/<id>/...` — (rare) session traceability
+   - Do NOT put free text in keys; free text goes in `embedding_text`.
+
+   **Namespace discipline (SPEC-DB-001 §3.1):** general user memory →
+   `hermes-memory`; a dream about a specific project → that project's
+   namespace. ALWAYS pass `namespace` explicitly on every remember/recall/
+   forget call. Never write cross-project fleet telemetry into
+   `hermes-memory`. Never split one fact across two namespaces.
+
 4. **Log promotions to dream diary.** Append to
    `$HERMES_HOME/dreams/diary.md`:
 
@@ -229,6 +312,10 @@ determines which tools you use in Phase 2.
    - SKIPPED: [candidate] (reason: [novelty/durability/specificity failure])
    - REMOVED: [entry] (reason: [stale/contradicted])
    ```
+
+   **For duckbrain, record the ACTUAL key ids** returned by `remember` in each
+   diary line (e.g. `→ key [/user/preference/x] id [<id>]`) — never invent or
+   approximate them (anti-fabrication, SPEC-DB-001 §9.2).
 
 5. **Post-promotion check — BACKEND-SPECIFIC:**
 
@@ -250,6 +337,14 @@ determines which tools you use in Phase 2.
    - Entries that were contradicted or corrected: call
      `fact_feedback(action='unhelpful', fact_id=<id>)` to decay them
 
+   #### DuckBrain Backend (E7 — mandatory)
+
+   1. `mcp__duckbrain__recall(key="<key written>", namespace="<ns>")` — confirm
+      the entry is retrievable. If empty: re-write once; if still empty, log the
+      failure in the diary and DO NOT claim success.
+   2. `mcp__duckbrain__get_compaction_stats()` — record tombstone % in the
+      dream diary (SPEC-DB-001 §4.3).
+
 ---
 
 ## Phase 2.5: Condensation (Memory Hygiene)
@@ -269,6 +364,9 @@ into the dreaming lifecycle.
 | **Built-in** | MEMORY.md > 80% char usage | Run condensation immediately — defer all promotions |
 | **Holographic** | Every dreaming cycle | Light condensation pass (trust decay review) |
 | **Holographic** | 5+ facts below `min_trust_threshold` | Deep condensation (prune or update) |
+| **DuckBrain** | Every dreaming cycle | Light pass: review tombstone %, flag candidates |
+| **DuckBrain** | Tombstone % high (per health field / flagged partition) | Deep condensation: `forget` stale ids, then `squash(dryRun=true)` → `squash()` |
+| **DuckBrain** | User explicitly requests | Full condensation incl. `aggressive=true` ONLY with explicit approval |
 
 ### Steps (Built-in Backend)
 
@@ -321,6 +419,30 @@ into the dreaming lifecycle.
    - UPDATED: [fact_id] old → new
    - HEALTHY: N facts at trust ≥0.5, avg retrieval: M
    ```
+
+### Steps (DuckBrain Backend)
+
+DuckBrain has NO char limit — capacity is **compaction health** (tombstone %,
+Parquet ratio, partition health) from `get_compaction_stats` (SPEC-DB-001 §4.3).
+
+1. **Inventory:** `mcp__duckbrain__list_keys(prefix="/", maxDepth=3, limit=200,
+   namespace="<ns>")` — discover condensation candidate subtrees.
+2. **Candidate detail:** `mcp__duckbrain__recall(keyPrefix="<subtree>",
+   limit=100, namespace="<ns>")` — pull the entries under each candidate subtree.
+3. **Contradiction resolution:** `mcp__duckbrain__recall(query="<claim>",
+   limit=10, namespace="<ns>")` + `session_search` to pick the winner. Never
+   tombstone without evidence.
+4. **Tombstone stale/contradicted:** `mcp__duckbrain__forget(id=<id>,
+   reason="<evidence>", namespace="<ns>")` — one call per stale id. Ids come
+   from the recall/list_keys results — never fabricated (E5).
+5. **Preview compaction (MANDATORY before real squash — E6):**
+   `mcp__duckbrain__squash(dryRun=true)` — inspect what would change.
+6. **Execute compaction:** `mcp__duckbrain__squash()` (dryRun=false) — ONLY
+   when tombstone % is high / the health flag is set. Never `aggressive=true`
+   without explicit user approval.
+7. **Verify:** `mcp__duckbrain__get_compaction_stats()` — confirm tombstone %
+   dropped. Record before/after values in the diary (anti-fabrication,
+   SPEC-DB-001 §9.3).
 
 ### Rules
 
@@ -403,6 +525,20 @@ structural action.
 - **For holographic: entities are mandatory on add.** Never call
   `fact_store(action='add')` without `entities`. Without entities, the fact
   cannot be recalled via `probe` or `reason` — it's effectively orphaned.
+- **For duckbrain: embedding_text is REQUIRED and non-empty on every
+  `remember`.** Without it the fact cannot be found by semantic
+  `recall(query=...)` — it's invisible to VSS queries (E3). Always set
+  `domain` (person|event|concept|message|config|raw_note) — inconsistent
+  domain usage silently fragments retrieval. Never route duckbrain promotions
+  to `memory()` or `fact_store()`.
+- **For duckbrain: namespace discipline.** Always pass `namespace` explicitly
+  on every remember/recall/forget call — never rely on the current-namespace
+  default. General user memory → `hermes-memory`; project dreams → that
+  project's namespace. Never split one fact across two namespaces.
+- **For duckbrain: forget is a tombstone; squash needs a dryRun preview
+  first.** `forget(id=...)` ids MUST come from a prior recall/list_keys result
+  (E5). Real `squash()` only when tombstone % is high; `aggressive=true` only
+  with explicit approval (E6).
 - **Preserve the § delimiter (built-in only).** When reading/writing MEMORY.md
   directly, never corrupt the entry separator.
 - **Keep dreams compact.** Dream artifacts should be under 200 lines. If a
@@ -412,6 +548,9 @@ structural action.
     that reduce char count*. Over 80% → defer everything, run Phase 2.5 Condensation first.
   - Holographic: No char limit, but flag entries below `min_trust_threshold`.
     Contradicted entries should get `fact_feedback(action='unhelpful')`.
+  - DuckBrain: No char limit — capacity = compaction health. Flag high
+    tombstone % from `get_compaction_stats`; deep-condense with `forget` +
+    `squash(dryRun=true)` → `squash()` when the health flag is set.
 - **Dream diary is append-only.** Never overwrite previous diary entries. New
   entries go at the bottom (chronological order).
 - **Session IDs in diary.** Always note which session(s) informed each promotion
@@ -425,29 +564,32 @@ After a dreaming run:
 1. Backend was correctly detected and logged
 2. Phase 2 promotions used the correct backend tools
 3. Post-promotion check passed (char limit for built-in, trust scores for
-   holographic)
+   holographic, compaction stats for duckbrain)
 4. Dream artifact exists with all three phases documented
 5. Dream diary has a new entry
 6. No entries were promoted without a source session reference
 7. For holographic: all new entries have entities
+8. For duckbrain: every `remember` passed `namespace` explicitly,
+   `embedding_text` was non-empty, `domain` was set, the actual key ids are in
+   the diary, and the post-promotion `recall(key=...)` confirmed each write (E7)
 
 ---
 
 ## Compatibility Matrix
 
-| Feature | Built-in (MEMORY.md) | Holographic |
-|---|---|---|
-| Phase 0 detection | ✅ | ✅ |
-| Phase 1 session review | ✅ | ✅ |
-| Phase 2: add | `memory(action='add', target='memory')` | `fact_store(action='add', content='...', entities=[...])` |
-| Phase 2: replace | `memory(action='replace', old_text='...')` | `fact_store(action='update', fact_id=N)` |
-| Phase 2: remove | `memory(action='remove', old_text='...')` | `fact_store(action='remove', fact_id=N)` |
-| Phase 2: list/verify | Read MEMORY.md | `fact_store(action='list')` |
-| Capacity check | Char count / 2,200 | Trust score distribution |
-| Bloat remediation | Phase 2.5 Condensation (built into dreaming) | `fact_feedback(action='unhelpful')` + trust decay |
-| Phase 3 REM | ✅ | ✅ |
-| Honcho fallback | ✅ (falls back to built-in) | N/A |
-| Mem0 fallback | ✅ (falls back to built-in) | N/A |
+| Feature | Built-in (MEMORY.md) | Holographic | DuckBrain |
+|---|---|---|---|
+| Phase 0 detection | ✅ | ✅ | `memory.provider: duckbrain` AND :3000 healthy |
+| Phase 1 session review | ✅ | ✅ | ✅ (same as other backends) |
+| Phase 2: add | `memory(action='add', target='memory')` | `fact_store(action='add', content='...', entities=[...])` | `remember(key, domain, attributes, embedding_text, namespace)` |
+| Phase 2: replace | `memory(action='replace', old_text='...')` | `fact_store(action='update', fact_id=N)` | `remember` (same key) + `forget` old id |
+| Phase 2: remove | `memory(action='remove', old_text='...')` | `fact_store(action='remove', fact_id=N)` | `forget(id, reason)` tombstone |
+| Phase 2: list/verify | Read MEMORY.md | `fact_store(action='list')` | `recall(keyPrefix="/")` + `list_keys` |
+| Capacity check | Char count / 2,200 | Trust score distribution | `get_compaction_stats()` (tombstone %, parquet ratio) |
+| Bloat remediation | Phase 2.5 Condensation (built into dreaming) | `fact_feedback(action='unhelpful')` + trust decay | `forget` + `squash(dryRun=true)` → `squash()` |
+| Phase 3 REM | ✅ | ✅ | ✅ |
+| Honcho fallback | ✅ (falls back to built-in) | N/A | N/A |
+| Mem0 fallback | ✅ (falls back to built-in) | N/A | N/A |
 
 ---
 
@@ -457,7 +599,25 @@ After a dreaming run:
   skill doesn't recognize, it falls back to built-in. That's intentional — better
   to write to MEMORY.md than to nothing. But if the user expected holographic
   behavior and didn't get it, they won't know unless you report the backend in
-  the REM message.
+  the REM message. Same for duckbrain: if :3000 is down or the
+  `mcp__duckbrain__*` tools are absent (E1/E2), the fallback to built-in is
+  silent — log the reason in the dream artifact backend section.
+- **DuckBrain namespace drift.** The current namespace can be changed by another
+  tool mid-cycle. Every duckbrain call passes `namespace` explicitly, so drift
+  cannot corrupt writes (SPEC-DB-001 §6).
+- **DuckBrain duplicate keys are legal.** Keys are not unique — ids are.
+  Replacement = write new id at same key + forget old id. Verify the old id is
+  tombstoned (list_keys/recall no longer returns it live).
+- **`squash(aggressive=true)` rewrites git history.** DuckBrain is git-backed.
+  Aggressive squash is destructive to history — reserve for explicit user
+  approval or extreme tombstone ratios (E6).
+- **Cron jobs cannot access duckbrain MCP tools.** Hermes core hardcodes
+  `skip_memory=True` for all cron jobs (`cron/scheduler.py:1686`). Phase 0
+  detection correctly identifies the backend, but the `mcp__duckbrain__*` tools
+  are unavailable in scheduled cron (E8). Phase 2 falls back to built-in
+  MEMORY.md patching — this means scheduled cron cannot consolidate duckbrain
+  memories. Running the job manually (`hermes cron run <id>`) restores full
+  duckbrain access.
 - **Holographic entities are not optional.** Unlike built-in memory where you
   can write any string, holographic facts without entities are invisible to
   `probe` and `reason`. Always provide entities.
