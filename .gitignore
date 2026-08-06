@@ -11,3 +11,13 @@ Thumbs.db
 # Hermes
 *.db
 dreams/
+
+# GitReins local state
+.gitreins/tasks.yaml
+.gitreins/history/
+.gitleaks.toml
+
+# Hilo
+.hilo/
+__pycache__/
+.venv/

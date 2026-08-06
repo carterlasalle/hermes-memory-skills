@@ -1,0 +1,14 @@
+guards:
+  secrets: true
+  lint: true
+  tests: true
+  test_mode: diff
+  test_command: "true"
+  test_timeout: 60
+evaluator:
+  max_iterations: 15
+  static_analysis_diagnostics: false
+history:
+  enabled: true
+  storage: git
+  max_verdicts: 1000
