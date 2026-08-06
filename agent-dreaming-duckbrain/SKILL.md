@@ -55,13 +55,25 @@ is down.
 
 ### Detection result table
 
-| Config `memory.provider` | DuckBrain :3000 healthy? | Backend | Phase 2 tools |
-|---|---|---|---|
-| `duckbrain` | yes | **duckbrain** | remember / recall / forget / list_keys / squash |
-| `duckbrain` | no | built-in (fallback) | `memory()` |
-| `""` / null / absent | — | built-in | `memory()` |
-| `holographic` | — | holographic | fact_store / fact_feedback |
-| other | — | built-in (fallback) | `memory()` |
+> **This is the DuckBrain-NATIVE skill — it IS the duckbrain backend.** Unlike
+> `agent-dreaming-agnostic`, it does not auto-detect between backends. So the
+> operative gate is **server liveness + tool presence**, NOT the config
+> `memory.provider` value. A live `:3000` server with `mcp__duckbrain__*` tools
+> in the toolset IS duckbrain, even if `config.yaml` omits `memory.provider`
+> (common — see T06 finding #3). Only fall back when the server is down or the
+> tools are absent.
+
+| Config `memory.provider` | DuckBrain :3000 healthy? | `mcp__duckbrain__*` present? | Backend | Phase 2 tools |
+|---|---|---|---|---|
+| `duckbrain` (or absent/null) | yes | yes | **duckbrain** | remember / recall / forget / list_keys / squash |
+| `duckbrain` (or absent/null) | yes | no | built-in (fallback, E2/E8) | `memory()` |
+| any | no | — | built-in (fallback, E1) | `memory()` |
+| `holographic` (explicit, server down) | — | — | holographic (use agnostic instead) | fact_store / fact_feedback |
+| other | — | — | built-in (fallback) | `memory()` |
+
+The primary signal is the **last two columns** (server healthy AND tools
+present → duckbrain). The config `provider` value is informational; it is not
+a blocker for this native skill when the server and tools are live.
 
 ### Also verify tool availability
 
