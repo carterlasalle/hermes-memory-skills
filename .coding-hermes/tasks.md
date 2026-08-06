@@ -7,7 +7,6 @@
 
 | ID | Task | Pri | Cpx | Deps | Tags | Model | Reasoning | Fallback |
 |----|------|-----|-----|------|------|-------|-----------|----------|
-| T06 | TEST: end-to-end verification — run ONE manual dream cycle against live DuckBrain (:3000) in hermes-memory namespace; verify remember→recall→forget→squash routing works; record evidence (key ids) in diary | High | 3±1 | T02,T03 | +++duckbrain, ++terminal, ++memory, -vision | DS-V4-Flash | Medium | DS-V4-Pro |
 
 ## [ ] NEVER-DONE — Run coding-hermes-never-done 12-point audit
 
@@ -25,6 +24,7 @@ verify a DuckBrain memory lands), verify behavior not just file presence.
 
 | ID | Task | Pri | Cpx | Commit | Model |
 |----|------|-----|-----|--------|-------|
+| T06 | TEST: live e2e dream cycle vs DuckBrain :3000 (hermes-memory ns) — remember→recall→forget→squash verified with REAL ids (`60bc7ad0…`, `aba9c198…`); evidence in `agent-dreaming-agnostic/references/duckbrain-e2e-evidence.md` + diary. GitReins judge PASS (8/8). Found: squash needs explicit `partition` (default-ns resolution bug); real squash blocked by server SQL parser bug (out of repo scope) | High | 3±1 | c65633e | DS-V4-Flash |
 | T05 | DOC: `README.md` — DuckBrain added to backend matrix, detection (+:3000 liveness), installation, cron notes (E8). GitReins judge PASS (4/4) | Medium | 2±1 | 8c7818c | DS-V4-Flash |
 | T04 | DOC: `agent-dreaming-agnostic/references/duckbrain-backend.md` — tools, schema, namespaces, key/domain strategy, VSS, compaction, comparison table. GitReins judge PASS (3/3) | Medium | 2±1 | f660415 | DS-V4-Flash |
 | T03 | CORE: `agent-dreaming-agnostic/SKILL.md` — DuckBrain routing added (Phase 0 two-step detect, Phase 2 promotion routing, Phase 2.5 condensation, compat matrix column). GitReins judge PASS (5/5) | High | 4±1 | c230f07 | DS-V4-Flash |
