@@ -6,9 +6,9 @@ guards:
   test_command: "true"
   test_timeout: 60
 evaluator:
-  max_iterations: 15
-  max_time: 10m
-  max_input_tokens: 0.2M
+  max_iterations: 60
+  max_time: 20m
+  max_input_tokens: 1M
   max_output_tokens: 0.4M
   static_analysis_diagnostics: false
 defaults:
