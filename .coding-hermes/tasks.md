@@ -27,7 +27,7 @@ verify a DuckBrain memory lands), verify behavior not just file presence.
 
 | ID | Task | Pri | Cpx | Commit | Model |
 |----|------|-----|-----|--------|-------|
-| T04 | DOC: `agent-dreaming-agnostic/references/duckbrain-backend.md` — tools, schema, namespaces, key/domain strategy, VSS, compaction, comparison table. GitReins judge PASS (3/3) | Medium | 2±1 | <pending> | DS-V4-Flash |
+| T04 | DOC: `agent-dreaming-agnostic/references/duckbrain-backend.md` — tools, schema, namespaces, key/domain strategy, VSS, compaction, comparison table. GitReins judge PASS (3/3) | Medium | 2±1 | f660415 | DS-V4-Flash |
 | T03 | CORE: `agent-dreaming-agnostic/SKILL.md` — DuckBrain routing added (Phase 0 two-step detect, Phase 2 promotion routing, Phase 2.5 condensation, compat matrix column). GitReins judge PASS (5/5) | High | 4±1 | c230f07 | DS-V4-Flash |
 | T02 | CORE: `agent-dreaming-duckbrain/SKILL.md` — DuckBrain-native dreaming skill (Phase 0 gate, DuckBrain-only Phase 2/2.5 routing, explicit namespaces, E1-E8 catalog). GitReins judge PASS (6/6) | High | 4±1 | 54c1bc0 | DS-V4-Flash |
 | T01 | SPEC: `specs/duckbrain-backend.md` — routing contract (Phase 0 detect, Phase 2 remember/recall/forget, Phase 2.5 forget+squash, ns/key/domain strategy, capacity=compaction stats, compat matrix, verification). GitReins judge PASS (6/6 criteria) | Critical | 3±1 | 1ca9629 | DS-V4-Flash |
