@@ -2,7 +2,7 @@
 
 > Foreman: deepseek-v4-flash @ openrouter | DuckBrain: hermes-memory | Remote: carterlasalle/hermes-memory-skills
 > Scope: add **DuckBrain** as a memory backend to the agent-dreaming skills. SPEC gates CORE.
-> Status 2026-08-06: **IDLE tick #2** — audit found 2 gaps, BOTH fixed same tick (T07, T08). Checks: spec alignment → T07; docs ✅; test/deps/perf N/A (markdown repo); pitfalls → T08 (gitleaks allowlist whitelisted ALL .md — entire repo content — now narrowed, 40 commits re-scanned clean); endpoints ✅ (:3000/health, uptime 38.6h); CI/CD ✅ (gitreins guard PASS); DuckBrain sync ✅ (24 keys in hermes-memory, project+reflections current); wiring/usability ✅ (T06 evidence); GitReins judge ✅ (2/2 + 2/2). Also logged 3e4f6e9 (T06 finding #3 fix, landed post-idle-tick-1) on the board. Cooldown: 64800s (18h, owned via API PUT).
+> Status 2026-08-06: **IDLE tick #3** — audit clean, 0 gaps. Checks: spec alignment ✅ (spec §4.1a/4.1b match both skills' gates, 4585a0e); docs ✅ (README matrix, agnostic refs, e2e evidence); test/deps/perf N/A (markdown-only repo); pitfalls ✅ (gitleaks allowlist narrowed — only VCS/gitreins/log paths, T08 held); endpoints ✅ (:3000/health healthy, uptime 38.75h); CI/CD ✅ (gitreins guard PASS — secrets/lint/tests); DuckBrain sync ✅ (24 keys in hermes-memory, tick record current, project+reflections fresh); wiring/usability ✅ (T06 live dream-cycle evidence, still valid); GitReins judge ✅ (evaluator configured + sized: 60 iter/20m/1M in/0.4M out). No gitreins tasks pending (0). Cooldown re-owned at 64800s (18h, PUT → GET verified).
 
 ## Active
 
