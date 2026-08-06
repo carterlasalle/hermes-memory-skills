@@ -7,7 +7,6 @@
 
 | ID | Task | Pri | Cpx | Deps | Tags | Model | Reasoning | Fallback |
 |----|------|-----|-----|------|------|-------|-----------|----------|
-| T01 | SPEC: write `specs/duckbrain-backend.md` — exact routing contract (Phase 0 detect, Phase 2 remember/recall/forget mapping, Phase 2.5 forget+squash, namespace/key/domain strategy, capacity=compaction stats, compatibility matrix, verification) per coding-hermes-specs standard | Critical | 3±1 | — | +++docs, ++duckbrain, ++memory, -vision | DS-V4-Flash | Medium | DS-V4-Pro |
 | T02 | CORE: create `agent-dreaming-duckbrain/SKILL.md` — DuckBrain-native dreaming skill routing to DuckBrain MCP (remember/recall/forget/list_keys/squash), hermes-memory namespace default | High | 4±1 | T01 | +++duckbrain, ++memory, ++markdown, -vision | DS-V4-Flash | Medium | Kimi-K3 |
 | T03 | CORE: extend `agent-dreaming-agnostic/SKILL.md` — add duckbrain to Phase 0 detection, Phase 2/2.5 routing, capacity & condensation sections, compatibility matrix (do NOT break built-in/holographic) | High | 4±1 | T01 | +++memory, ++duckbrain, ++markdown, -vision | DS-V4-Flash | Medium | Kimi-K3 |
 | T04 | DOC: add `agent-dreaming-agnostic/references/duckbrain-backend.md` — DuckBrain tools, schema, namespaces, key/domain strategy, VSS, compaction | Medium | 2±1 | T01 | +++docs, ++duckbrain, -vision | DS-V4-Flash | Low | — |
@@ -30,4 +29,5 @@ verify a DuckBrain memory lands), verify behavior not just file presence.
 
 | ID | Task | Pri | Cpx | Commit | Model |
 |----|------|-----|-----|--------|-------|
+| T01 | SPEC: `specs/duckbrain-backend.md` — routing contract (Phase 0 detect, Phase 2 remember/recall/forget, Phase 2.5 forget+squash, ns/key/domain strategy, capacity=compaction stats, compat matrix, verification). GitReins judge PASS (6/6 criteria) | Critical | 3±1 | <COMMIT> | DS-V4-Flash |
 | T00 | Bootstrap: clone fork, gitreins+hilo init, board, AGENTS.md | Trivial | 1±0 | — | DS-V4-Flash |

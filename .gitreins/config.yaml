@@ -7,7 +7,13 @@ guards:
   test_timeout: 60
 evaluator:
   max_iterations: 15
+  max_time: 10m
+  max_input_tokens: 0.2M
+  max_output_tokens: 0.4M
   static_analysis_diagnostics: false
+defaults:
+  model: deepseek-v4-flash
+  api_key_env: GITREINS_LLM_API_KEY
 history:
   enabled: true
   storage: git
