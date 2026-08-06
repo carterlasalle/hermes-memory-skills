@@ -2,7 +2,7 @@
 
 > Foreman: deepseek-v4-flash @ openrouter | DuckBrain: hermes-memory | Remote: carterlasalle/hermes-memory-skills
 > Scope: add **DuckBrain** as a memory backend to the agent-dreaming skills. SPEC gates CORE.
-> Status 2026-08-05: **IDLE tick #1** — all board tasks [x]. NEVER-DONE audit: spec alignment ✅ (T06 live-verified), docs ✅, no code/deps/perf (markdown repo), pitfalls → squash partition pitfall documented in spec+skills (c65633e), endpoints ✅ (live :3000), DuckBrain sync ✅, wiring N/A, usability ✅ (T06 dream cycle), GitReins judge ✅ (8/8). No new tasks. Cooldown → 43200s.
+> Status 2026-08-06: **IDLE tick #2** — audit found 2 gaps, BOTH fixed same tick (T07, T08). Checks: spec alignment → T07; docs ✅; test/deps/perf N/A (markdown repo); pitfalls → T08 (gitleaks allowlist whitelisted ALL .md — entire repo content — now narrowed, 40 commits re-scanned clean); endpoints ✅ (:3000/health, uptime 38.6h); CI/CD ✅ (gitreins guard PASS); DuckBrain sync ✅ (24 keys in hermes-memory, project+reflections current); wiring/usability ✅ (T06 evidence); GitReins judge ✅ (2/2 + 2/2). Also logged 3e4f6e9 (T06 finding #3 fix, landed post-idle-tick-1) on the board. Cooldown: 64800s (18h, owned via API PUT).
 
 ## Active
 
@@ -25,7 +25,9 @@ verify a DuckBrain memory lands), verify behavior not just file presence.
 
 | ID | Task | Pri | Cpx | Commit | Model |
 |----|------|-----|-----|--------|-------|
-| T06 | TEST: live e2e dream cycle vs DuckBrain :3000 (hermes-memory ns) — remember→recall→forget→squash verified with REAL ids (`60bc7ad0…`, `aba9c198…`); evidence in `agent-dreaming-agnostic/references/duckbrain-e2e-evidence.md` + diary. GitReins judge PASS (8/8). Found: squash needs explicit `partition` (default-ns resolution bug); real squash blocked by server SQL parser bug (out of repo scope) | High | 3±1 | c65633e | DS-V4-Flash |
+| T08 | PITFALL: `.gitleaks.toml` allowlist whitelisted `specs/`, `docs/`, `.*\.spec\.md`, AND `.*\.md` — the entire content of this markdown-only repo, disabling the secrets guard for real content. Narrowed to VCS/gitreins/log paths only (file is gitignored local state — fix lives in workdir; gitreins reads it from there). Verified: gitleaks detect 40 commits clean, no panic; gitreins guard secrets PASS. GitReins judge PASS (2/2, verdict 5e8bc470) | High | 1±0 | — (gitignored file; board+DuckBrain are the record) | DS-V4-Flash |
+| T07 | SPEC: `specs/duckbrain-backend.md` §4.1 split into 4.1a (agnostic — config-gated two-step detection) and 4.1b (native — liveness + `mcp__duckbrain__*` tool presence, config informational), reconciling the spec with the 3e4f6e9 gate fix. GitReins judge PASS (2/2, verdict 5ce2fc90) | High | 2±1 | 4585a0e | DS-V4-Flash |
+| T06b | FIX (logged post-idle-tick-1): `agent-dreaming-duckbrain/SKILL.md` Phase 0 gate — liveness + tool presence sufficient, config `memory.provider` optional (T06 finding #3; landed 2026-08-05 as 3e4f6e9) | High | 2±1 | 3e4f6e9 | DS-V4-Flash |
 | T05 | DOC: `README.md` — DuckBrain added to backend matrix, detection (+:3000 liveness), installation, cron notes (E8). GitReins judge PASS (4/4) | Medium | 2±1 | 8c7818c | DS-V4-Flash |
 | T04 | DOC: `agent-dreaming-agnostic/references/duckbrain-backend.md` — tools, schema, namespaces, key/domain strategy, VSS, compaction, comparison table. GitReins judge PASS (3/3) | Medium | 2±1 | f660415 | DS-V4-Flash |
 | T03 | CORE: `agent-dreaming-agnostic/SKILL.md` — DuckBrain routing added (Phase 0 two-step detect, Phase 2 promotion routing, Phase 2.5 condensation, compat matrix column). GitReins judge PASS (5/5) | High | 4±1 | c230f07 | DS-V4-Flash |
