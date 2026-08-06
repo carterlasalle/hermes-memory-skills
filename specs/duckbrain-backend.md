@@ -123,11 +123,21 @@ fields that exist (tombstone %, partition count, parquet ratio when present).
 
 ```
 mcp__duckbrain__squash(
-  partition: string,  # OPTIONAL — specific partition to squash
+  partition: string,  # OPTIONAL in schema — EFFECTIVELY REQUIRED on deployments whose
+                      # default namespace is not literally "default" (see pitfall below)
   dryRun: boolean,    # OPTIONAL — default false; preview without changes
   aggressive: boolean # OPTIONAL — default false; squash git history aggressively
 )
 ```
+
+> **⚠️ Proven pitfall (T06 e2e, 2026-08-05):** `squash()` with NO `partition`
+> fails on this deployment with `"Compaction failed: Default namespace not
+> found"` — the server resolves the missing partition against a namespace
+> literally named `default`, but this deployment's default namespace is
+> `hermes-memory`. Always pass `partition` explicitly. The real partition
+> names follow `namespaces/<ns>/<domain>/<yyyy-mm>/current.jsonl` (e.g.
+> `concept/2026-08/` for domain=concept data written 2026-08). See
+> `agent-dreaming-agnostic/references/duckbrain-e2e-evidence.md`.
 
 - `squash(dryRun=true)` is the preview — ALWAYS run preview first, inspect what
   would change, then run real squash.

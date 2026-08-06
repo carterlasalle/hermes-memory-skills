@@ -436,10 +436,16 @@ Parquet ratio, partition health) from `get_compaction_stats` (SPEC-DB-001 §4.3)
    reason="<evidence>", namespace="<ns>")` — one call per stale id. Ids come
    from the recall/list_keys results — never fabricated (E5).
 5. **Preview compaction (MANDATORY before real squash — E6):**
-   `mcp__duckbrain__squash(dryRun=true)` — inspect what would change.
-6. **Execute compaction:** `mcp__duckbrain__squash()` (dryRun=false) — ONLY
-   when tombstone % is high / the health flag is set. Never `aggressive=true`
-   without explicit user approval.
+   `mcp__duckbrain__squash(dryRun=true, partition="<domain>/<yyyy-mm>/")` —
+   inspect what would change. **Always pass `partition` explicitly** — the
+   server resolves a missing partition against a namespace literally named
+   `default` and fails with "Default namespace not found" on deployments whose
+   default is `hermes-memory` (proven T06, 2026-08-05). Real partition names
+   follow `namespaces/<ns>/<domain>/<yyyy-mm>/current.jsonl` (e.g.
+   `concept/2026-08/` for domain=concept data written 2026-08).
+6. **Execute compaction:** `mcp__duckbrain__squash(partition="<domain>/<yyyy-mm>/")`
+   (dryRun=false) — ONLY when tombstone % is high / the health flag is set.
+   Never `aggressive=true` without explicit user approval.
 7. **Verify:** `mcp__duckbrain__get_compaction_stats()` — confirm tombstone %
    dropped. Record before/after values in the diary (anti-fabrication,
    SPEC-DB-001 §9.3).
