@@ -7,8 +7,6 @@
 
 | ID | Task | Pri | Cpx | Deps | Tags | Model | Reasoning | Fallback |
 |----|------|-----|-----|------|------|-------|-----------|----------|
-| T04 | DOC: add `agent-dreaming-agnostic/references/duckbrain-backend.md` — DuckBrain tools, schema, namespaces, key/domain strategy, VSS, compaction | Medium | 2±1 | T01 | +++docs, ++duckbrain, -vision | DS-V4-Flash | Low | — |
-| T05 | DOC: update `README.md` — add DuckBrain to backend matrix, detection, installation, cron notes | Medium | 2±1 | T02,T03 | +++docs, -vision | DS-V4-Flash | Low | — |
 | T06 | TEST: end-to-end verification — run ONE manual dream cycle against live DuckBrain (:3000) in hermes-memory namespace; verify remember→recall→forget→squash routing works; record evidence (key ids) in diary | High | 3±1 | T02,T03 | +++duckbrain, ++terminal, ++memory, -vision | DS-V4-Flash | Medium | DS-V4-Pro |
 
 ## [ ] NEVER-DONE — Run coding-hermes-never-done 12-point audit
@@ -27,6 +25,7 @@ verify a DuckBrain memory lands), verify behavior not just file presence.
 
 | ID | Task | Pri | Cpx | Commit | Model |
 |----|------|-----|-----|--------|-------|
+| T05 | DOC: `README.md` — DuckBrain added to backend matrix, detection (+:3000 liveness), installation, cron notes (E8). GitReins judge PASS (4/4) | Medium | 2±1 | 8c7818c | DS-V4-Flash |
 | T04 | DOC: `agent-dreaming-agnostic/references/duckbrain-backend.md` — tools, schema, namespaces, key/domain strategy, VSS, compaction, comparison table. GitReins judge PASS (3/3) | Medium | 2±1 | f660415 | DS-V4-Flash |
 | T03 | CORE: `agent-dreaming-agnostic/SKILL.md` — DuckBrain routing added (Phase 0 two-step detect, Phase 2 promotion routing, Phase 2.5 condensation, compat matrix column). GitReins judge PASS (5/5) | High | 4±1 | c230f07 | DS-V4-Flash |
 | T02 | CORE: `agent-dreaming-duckbrain/SKILL.md` — DuckBrain-native dreaming skill (Phase 0 gate, DuckBrain-only Phase 2/2.5 routing, explicit namespaces, E1-E8 catalog). GitReins judge PASS (6/6) | High | 4±1 | 54c1bc0 | DS-V4-Flash |
