@@ -2,6 +2,7 @@
 
 > Foreman: deepseek-v4-flash @ openrouter | DuckBrain: hermes-memory | Remote: carterlasalle/hermes-memory-skills
 > Scope: add **DuckBrain** as a memory backend to the agent-dreaming skills. SPEC gates CORE.
+> Status 2026-08-05: **IDLE tick #1** — all board tasks [x]. NEVER-DONE audit: spec alignment ✅ (T06 live-verified), docs ✅, no code/deps/perf (markdown repo), pitfalls → squash partition pitfall documented in spec+skills (c65633e), endpoints ✅ (live :3000), DuckBrain sync ✅, wiring N/A, usability ✅ (T06 dream cycle), GitReins judge ✅ (8/8). No new tasks. Cooldown → 43200s.
 
 ## Active
 
