@@ -203,9 +203,17 @@ domain usage silently fragments retrieval.
 
 ## 4. Wiring — Where the Routing Contract Lives
 
-### 4.1 Phase 0 detection (in agent-dreaming-agnostic AND agent-dreaming-duckbrain)
+### 4.1 Phase 0 detection (skill-specific gates — NOT identical across skills)
 
-Detection is a **two-step check** — config value AND liveness:
+The two duckbrain skills use **different** Phase 0 gates. `agent-dreaming-agnostic`
+must discriminate between three backends, so its gate is **config-driven**
+(provider value + liveness). `agent-dreaming-duckbrain` IS the duckbrain
+backend — it does not auto-detect — so its gate is **server liveness + tool
+presence**, with the config `memory.provider` value informational, NOT a
+blocker (fix `3e4f6e9`, T06 finding #3: live configs commonly omit the
+provider despite a healthy `:3000`).
+
+#### 4.1a agent-dreaming-agnostic — config-gated two-step check
 
 ```
 Step A — read $HERMES_HOME/config.yaml memory.provider:
@@ -222,7 +230,7 @@ Step B — if provider == "duckbrain", verify liveness:
      fallback to built-in" and route to built-in memory()
 ```
 
-**Detection result table (must appear in BOTH skill files):**
+**Agnostic detection result table (appears in agent-dreaming-agnostic):**
 
 | Config `memory.provider` | DuckBrain :3000 healthy? | Backend | Phase 2 tools |
 |---|---|---|---|
@@ -235,6 +243,22 @@ Step B — if provider == "duckbrain", verify liveness:
 Also verify tool availability: if provider is `duckbrain` and the `mcp__duckbrain__*`
 tools are NOT in the toolset (e.g. cron sessions where MCP tools may be absent),
 fall back to built-in and log it.
+
+#### 4.1b agent-dreaming-duckbrain — liveness + tool-presence gate (native)
+
+The native skill IS the duckbrain backend; it does not auto-detect between
+backends (see `agent-dreaming-duckbrain/SKILL.md` Phase 0). Its gate:
+
+1. `curl -s -m 5 http://127.0.0.1:3000/health` returns `{"status":"healthy",...}`
+2. `mcp__duckbrain__*` tools are present in the toolset
+
+Both true → **duckbrain**, proceed end-to-end with this skill. Either false →
+fall back to built-in `memory()` (E1 server down / E2 tools absent) and log
+the reason. The config `memory.provider` value is informational — a live
+`:3000` with tools present IS duckbrain even when config omits the provider
+(proven T06 finding #3). The native skill's result table is its own 5-column
+variant (adds an `mcp__duckbrain__* present?` column); it is NOT a copy of
+the agnostic table above.
 
 ### 4.2 Phase 2 promotion routing (duckbrain rows)
 
