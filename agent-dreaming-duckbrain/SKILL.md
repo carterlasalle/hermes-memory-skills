@@ -36,22 +36,37 @@ without approval.
 ## Phase 0: Backend Detection (gate — run first)
 
 Before any dreaming work, verify that the duckbrain backend is actually active.
-Detection is a **two-step check — config value AND liveness** (SPEC-DB-001 §4.1):
+This is the DuckBrain-NATIVE skill — it IS the duckbrain backend and does not
+auto-detect between backends (SPEC-DB-001 §4.1b). The operative gate is
+**server liveness + tool presence**; the config `memory.provider` value is
+informational, NOT a blocker (live configs commonly omit the provider despite
+a healthy `:3000` — T06 finding #3).
 
-### Step A — read the active memory provider
-
-```bash
-grep -A10 "^memory:" $HERMES_HOME/config.yaml | grep "provider:" | awk '{print $2}'
-```
-
-### Step B — if provider == "duckbrain", verify liveness
+### Gate check 1 — server liveness
 
 ```bash
 curl -s -m 5 http://127.0.0.1:3000/health
 ```
 
 Expected: `{"status":"healthy",...}`. Connection refused / timeout → the server
-is down.
+is down → fall back to built-in `memory()` (E1) and log the reason.
+
+### Gate check 2 — tool presence
+
+The `mcp__duckbrain__*` tools (remember / recall / forget / list_keys / squash /
+get_compaction_stats / namespace tools) must be present in the toolset. If they
+are absent (e.g. cron sessions where MCP tools may not be loaded), fall back to
+built-in `memory()` (E2/E8) and log the reason.
+
+### Informational — read the active memory provider (not a gate)
+
+```bash
+grep -A10 "^memory:" $HERMES_HOME/config.yaml | grep "provider:" | awk '{print $2}'
+```
+
+Used only to distinguish an explicit `holographic` config (route via
+`agent-dreaming-agnostic` instead). `duckbrain`, absent, or null with a live
+`:3000` and tools present → duckbrain, proceed end-to-end with this skill.
 
 ### Detection result table
 
@@ -74,12 +89,6 @@ is down.
 The primary signal is the **last two columns** (server healthy AND tools
 present → duckbrain). The config `provider` value is informational; it is not
 a blocker for this native skill when the server and tools are live.
-
-### Also verify tool availability
-
-If provider is `duckbrain` but the `mcp__duckbrain__*` tools are NOT in the
-toolset (e.g. cron sessions where MCP tools may be absent), fall back to
-built-in and log it (E2 / E8).
 
 ### Gate
 
