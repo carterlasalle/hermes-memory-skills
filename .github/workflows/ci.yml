@@ -1,0 +1,35 @@
+name: CI
+
+# Independent health check for this markdown/skills repo. GitReins verdicts can
+# be asserted rather than verified; this workflow gives an independent signal so
+# the dashboard's GitReins cross-check has a real CI to compare against.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  docs:
+    name: Docs health
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Verify required docs exist
+        run: |
+          for f in README.md AGENTS.md; do
+            test -f "$f" && echo "ok: $f" || { echo "missing: $f"; exit 1; }
+          done
+          test -d specs && echo "ok: specs/" || echo "warn: no specs/"
+
+      - name: Secrets scan
+        run: |
+          set +e
+          grep -rInE "(sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{36}|AKIA[0-9A-Z]{16})" \
+            --include="*.md" . 2>/dev/null
+          code=$?
+          if [ "$code" -eq 0 ]; then
+            echo "::error::potential secret found in markdown"
+            exit 1
+          fi
+          echo "no obvious secrets in markdown"
