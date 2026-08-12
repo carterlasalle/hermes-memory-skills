@@ -448,7 +448,12 @@ Parquet ratio, partition health) from `get_compaction_stats` (SPEC-DB-001 §4.3)
    Never `aggressive=true` without explicit user approval.
 7. **Verify:** `mcp__duckbrain__get_compaction_stats()` — confirm tombstone %
    dropped. Record before/after values in the diary (anti-fabrication,
-   SPEC-DB-001 §9.3).
+   SPEC-DB-001 §9.3). **Caveat (proven E2E-001, 2026-08-12):** on this
+   deployment the stats endpoint reads all-zeros even while live records and
+   tombstones exist (it counts compacted storage only) — when stats read zero
+   but writes/tombstones are known, treat `squash(dryRun=true,
+   partition=...)`'s preview ("Would compact N records, removing M tombstones")
+   as the operative bloat signal.
 
 ### Rules
 

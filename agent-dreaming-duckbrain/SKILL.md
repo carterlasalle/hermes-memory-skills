@@ -338,7 +338,12 @@ ratio, partition health) from `get_compaction_stats`.
    Never `aggressive=true` without explicit user approval.
 7. **Verify:** `mcp__duckbrain__get_compaction_stats()` — confirm tombstone %
    dropped. Record before/after values in the diary (anti-fabrication,
-   SPEC-DB-001 §9.3).
+   SPEC-DB-001 §9.3). **Caveat (proven E2E-001, 2026-08-12):** on this
+   deployment the stats endpoint reads all-zeros even while live records and
+   tombstones exist (it counts compacted storage only) — when stats read zero
+   but writes/tombstones are known, treat `squash(dryRun=true,
+   partition=...)`'s preview ("Would compact N records, removing M tombstones")
+   as the operative bloat signal.
 
 ### Log to dream diary
 
@@ -477,7 +482,7 @@ After a dreaming run:
 
 | Feature | DuckBrain |
 |---|---|
-| Phase 0 detection | `memory.provider: duckbrain` AND :3000 healthy |
+| Phase 0 detection | :3000 healthy AND `mcp__duckbrain__*` tools present (config provider informational — see Phase 0 / SPEC-DB-001 §4.1b) |
 | Phase 1 session review | ✅ (same as other backends) |
 | Phase 2: add | `remember(key, domain, attributes, embedding_text, namespace)` |
 | Phase 2: replace | `remember` (same key) + `forget` old id |
