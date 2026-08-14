@@ -12,7 +12,7 @@ evaluator:
   max_output_tokens: 0.4M
   static_analysis_diagnostics: false
 defaults:
-  model: deepseek-v4-flash
+  model: deepseek/deepseek-v4-flash-0731
   api_key_env: GITREINS_LLM_API_KEY
 history:
   enabled: true
